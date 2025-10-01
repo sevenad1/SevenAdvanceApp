@@ -10,3 +10,16 @@
 
 ### Removido
 - Nada
+
+------------------------
+## [1.0.2] - 2025-10-01
+### Adicionado
+- LICENSE.txt
+
+### Corrigido
+- package.json
+
+### Removido
+- Nada
+
+------------------------

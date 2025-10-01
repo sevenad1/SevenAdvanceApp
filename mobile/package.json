@@ -1,11 +1,17 @@
 {
-  "name": "seven-advance-app-mobile",
+  "name": "@sevenad1/sevenadvanceapp",
   "version": "1.0.0",
+  "description": "Aplicativo React Native SevenAdvanceApp publicado no GitHub Packages",
   "main": "index.js",
   "scripts": {
     "start": "react-native start",
     "android": "react-native run-android",
     "ios": "react-native run-ios"
+  },
+  "author": "Seven Advance",
+  "license": "SEE LICENSE IN LICENSE.txt",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
   },
   "dependencies": {
     "react": "18.2.0",
