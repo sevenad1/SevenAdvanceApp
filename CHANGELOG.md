@@ -23,3 +23,17 @@
 - Nada
 
 ------------------------
+## [1.0.3] - 2025-10-01
+### Adicionado
+- app.js
+- index.html
+- manifest.json
+- sw.js
+
+### Corrigido
+- Nada
+
+### Removido
+- Projeto Anterior da versão 1.0.2
+
+------------------------

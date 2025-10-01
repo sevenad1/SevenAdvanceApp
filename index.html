@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Seven Advance App</title>
+  <link rel="manifest" href="manifest.json" />
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    .hidden { display: none; }
+    #dashboard { margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h1>Login</h1>
+  <div id="login">
+    <input type="text" id="codigo" placeholder="Código" /><br /><br />
+    <input type="password" id="senha" placeholder="Senha" /><br /><br />
+    <button onclick="login()">Entrar</button>
+    <p id="erro" style="color: red;"></p>
+  </div>
+
+  <div id="dashboard" class="hidden">
+    <h2>Dashboard</h2>
+    <canvas id="grafico" width="400" height="200"></canvas>
+    <ul id="faltasList"></ul>
+    <button onclick="logout()">Sair</button>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
