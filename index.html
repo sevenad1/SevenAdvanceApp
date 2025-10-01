@@ -1,33 +1,207 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Seven Advance App</title>
-  <link rel="manifest" href="manifest.json" />
-  <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    .hidden { display: none; }
-    #dashboard { margin-top: 20px; }
-  </style>
+<meta charset="UTF-8" />
+<title>SevenAdvanceApp - Login e Faltas</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    background: #fafafa;
+    color: #333;
+  }
+  input, button {
+    font-size: 1rem;
+    padding: 10px;
+    margin: 5px 0;
+  }
+  #dashboard {
+    margin-top: 20px;
+    padding: 15px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 0 10px #ccc;
+  }
+  #faltasList {
+    list-style-type: none;
+    padding-left: 0;
+  }
+  #faltasList li {
+    padding: 4px 0;
+    border-bottom: 1px solid #eee;
+  }
+</style>
 </head>
 <body>
-  <h1>Login</h1>
-  <div id="login">
-    <input type="text" id="codigo" placeholder="Código" /><br /><br />
-    <input type="password" id="senha" placeholder="Senha" /><br /><br />
-    <button onclick="login()">Entrar</button>
-    <p id="erro" style="color: red;"></p>
-  </div>
 
-  <div id="dashboard" class="hidden">
-    <h2>Dashboard</h2>
-    <canvas id="grafico" width="400" height="200"></canvas>
-    <ul id="faltasList"></ul>
-    <button onclick="logout()">Sair</button>
-  </div>
+<h1>Login - SevenAdvanceApp</h1>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="app.js"></script>
+<div id="loginDiv">
+  <input type="text" id="codigo" placeholder="Código" />
+  <input type="password" id="senha" placeholder="Senha" />
+  <button onclick="login()">Entrar</button>
+  <p id="error" style="color:red;"></p>
+</div>
+
+<div id="dashboard" style="display:none;">
+  <h2>Dashboard</h2>
+  <p>Código: <span id="userCodigo"></span></p>
+  <h3>Faltas por dia</h3>
+  <ul id="faltasList"></ul>
+  <canvas id="faltasChart" width="400" height="200"></canvas>
+  <button onclick="logout()" style="margin-top:20px;">Sair</button>
+</div>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  // Substitua pelo seu ID da planilha Google (aquela parte da URL entre /d/ e /edit)
+  const SPREADSHEET_ID = '1yFbmLhHlx3Es8RK2tHXUj250BusHPhVLX1KBwEOIgas';
+
+  // URLs das abas Usuários (1) e Faltas (2)
+  const URL_USERS = `https://spreadsheets.google.com/feeds/list/${SPREADSHEET_ID}/1/public/values?alt=json`;
+  const URL_FALTAS = `https://spreadsheets.google.com/feeds/list/${SPREADSHEET_ID}/2/public/values?alt=json`;
+
+  let users = [];
+  let faltasPorDia = {};
+  let chartInstance = null;
+
+  async function fetchJSON(url) {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Erro ao carregar dados');
+    return await res.json();
+  }
+
+  async function fetchUsers() {
+    const data = await fetchJSON(URL_USERS);
+    return data.feed.entry.map(entry => ({
+      codigo: entry.gsx$codigo.$t,
+      senha: entry.gsx$senha.$t
+    }));
+  }
+
+  async function fetchFaltas() {
+    const data = await fetchJSON(URL_FALTAS);
+    const rawFaltas = data.feed.entry.map(entry => ({
+      codigo: entry.gsx$codigo.$t,
+      dia: entry.gsx$dia.$t
+    }));
+
+    // Cada falta = 1 registro, faltas = 1 sempre
+    const faltasMap = {};
+    rawFaltas.forEach(({codigo, dia}) => {
+      if (!faltasMap[codigo]) faltasMap[codigo] = [];
+      faltasMap[codigo].push({dia, faltas: 1});
+    });
+    return faltasMap;
+  }
+
+  async function loadData() {
+    try {
+      users = await fetchUsers();
+      faltasPorDia = await fetchFaltas();
+      console.log('Dados carregados:', users, faltasPorDia);
+    } catch (e) {
+      alert('Erro ao carregar dados: ' + e.message);
+    }
+  }
+
+  function login() {
+    const codigoInput = document.getElementById('codigo').value.trim();
+    const senhaInput = document.getElementById('senha').value.trim();
+    const user = users.find(u => u.codigo === codigoInput && u.senha === senhaInput);
+
+    const errorP = document.getElementById('error');
+    if (!user) {
+      errorP.textContent = 'Código ou senha incorretos.';
+      return;
+    }
+    errorP.textContent = '';
+
+    showDashboard(user.codigo);
+  }
+
+  function showDashboard(codigo) {
+    document.getElementById('loginDiv').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+
+    document.getElementById('userCodigo').textContent = codigo;
+
+    const faltasList = document.getElementById('faltasList');
+    faltasList.innerHTML = '';
+
+    const faltas = faltasPorDia[codigo] || [];
+
+    if (faltas.length === 0) {
+      faltasList.innerHTML = '<li>Sem registros de faltas.</li>';
+      renderChart([], []);
+      return;
+    }
+
+    // Ordenar por data para gráfico e lista (opcional)
+    faltas.sort((a, b) => new Date(a.dia) - new Date(b.dia));
+
+    const labels = [];
+    const dataPoints = [];
+
+    faltas.forEach(({dia, faltas}) => {
+      const li = document.createElement('li');
+      li.textContent = `${dia}`;
+      faltasList.appendChild(li);
+
+      labels.push(dia);
+      dataPoints.push(faltas); // sempre 1
+    });
+
+    renderChart(labels, dataPoints);
+  }
+
+  function renderChart(labels, data) {
+    const ctx = document.getElementById('faltasChart').getContext('2d');
+    if (chartInstance) {
+      chartInstance.destroy();
+    }
+    chartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Faltas (1 falta por dia)',
+          data,
+          backgroundColor: 'rgba(255, 99, 132, 0.6)',
+          borderColor: 'rgba(255, 99, 132, 1)',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        scales: {
+          y: {
+            beginAtZero: true,
+            precision: 0,
+            max: 1
+          }
+        }
+      }
+    });
+  }
+
+  function logout() {
+    document.getElementById('loginDiv').style.display = 'block';
+    document.getElementById('dashboard').style.display = 'none';
+    document.getElementById('codigo').value = '';
+    document.getElementById('senha').value = '';
+    document.getElementById('error').textContent = '';
+    if (chartInstance) {
+      chartInstance.destroy();
+      chartInstance = null;
+    }
+  }
+
+  window.onload = () => {
+    loadData();
+  };
+</script>
+
 </body>
 </html>

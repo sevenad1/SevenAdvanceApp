@@ -37,3 +37,12 @@
 - Projeto Anterior da versão 1.0.2
 
 ------------------------
+## [1.0.4] - 2025-10-01
+### Adicionado
+- Nada
+
+### Corrigido
+- Refeito Todo O Codigo Do index.html
+
+### Removido
+- Projeto Anterior da versão 1.0.3
